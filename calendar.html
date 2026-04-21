@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 16px;
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .controls button {
+    padding: 8px 20px;
+    font-size: 0.95rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .controls button:hover { background: #e8e8e8; }
+
+  .controls .today-btn {
+    border-color: #4a90d9;
+    color: #4a90d9;
+    font-weight: 600;
+  }
+
+  .controls .today-btn:hover { background: #4a90d9; color: #fff; }
+
+  .grid-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow-x: auto;
+    padding: 12px 16px 16px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  thead th {
+    padding: 6px 2px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid #e0e0e0;
+  }
+
+  thead th:first-child {
+    text-align: center;
+    width: 40px;
+  }
+
+  tbody td {
+    text-align: center;
+    font-size: 0.82rem;
+    padding: 2px;
+    border: 1px solid #f0f0f0;
+    height: 30px;
+    vertical-align: middle;
+  }
+
+  tbody td:first-child {
+    font-size: 0.7rem;
+    color: #aaa;
+    background: #fafafa;
+    border-right: 2px solid #e8e8e8;
+    font-weight: 500;
+  }
+
+  .month-label td {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #555;
+    background: #f0f4f8;
+    border-color: #d8e4ee;
+    height: 22px;
+    padding: 1px 2px;
+    text-align: left;
+    letter-spacing: 0.03em;
+  }
+
+  .month-label td:first-child,
+  .month-label td:last-child {
+    background: #f0f4f8;
+  }
+
+  .month-label .month-year {
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .day-cell {
+    cursor: default;
+    transition: background 0.1s;
+  }
+
+  .day-cell:hover {
+    background: #e8f0fe;
+  }
+
+  .month-color-0 { background: #fffbe6; }
+  .month-color-1 { background: #f0f4f8; }
+  .month-color-2 { background: #fffbe6; }
+  .month-color-3 { background: #f0f4f8; }
+  .month-color-4 { background: #fffbe6; }
+  .month-color-5 { background: #f0f4f8; }
+  .month-color-6 { background: #fffbe6; }
+  .month-color-7 { background: #f0f4f8; }
+  .month-color-8 { background: #fffbe6; }
+  .month-color-9 { background: #f0f4f8; }
+  .month-color-10 { background: #fffbe6; }
+  .month-color-11 { background: #f0f4f8; }
+
+  .day-cell.today {
+    background: #4a90d9 !important;
+    color: #fff !important;
+    font-weight: 700;
+    border-radius: 4px;
+  }
+
+  .day-cell.today:hover {
+    background: #3a7bc8 !important;
+  }
+</style>
+</head>
+<body>
+
+<h1>Calendar</h1>
+
+<div class="controls">
+  <button id="prev-month">◀ Prev Month</button>
+  <button id="today-btn" class="today-btn">Today</button>
+  <button id="next-month">Next Month ▶</button>
+</div>
+
+<div class="grid-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Wk</th>
+        <th>Mon</th>
+        <th>Tue</th>
+        <th>Wed</th>
+        <th>Thu</th>
+        <th>Fri</th>
+        <th>Sat</th>
+        <th>Sun</th>
+      </tr>
+    </thead>
+    <tbody id="calendar-body"></tbody>
+  </table>
+</div>
+
+<script>
+(function() {
+  var DAYS_PER_WEEK = 7;
+
+  var MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Always show 6 months before and 6 months after the center date
+  var monthsBefore = 6;
+
+  var tbody = document.getElementById('calendar-body');
+
+  // The center date that the view is anchored to
+  var viewCenter = new Date(today);
+
+  function computeView(anchorDate) {
+    anchorDate = anchorDate || viewCenter;
+    // Start date: 6 months before anchor, aligned to Monday
+    var startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - monthsBefore, 1);
+    startDate.setDate(startDate.getDate() - startDate.getDay() + 1);
+    // End date: 6 months after anchor, aligned to Sunday
+    var endDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 6, 1);
+    endDate.setDate(endDate.getDate() + 6 - endDate.getDay());
+    // Calculate total days and weeks
+    var totalDays = Math.ceil((endDate - startDate) / 86400000) + 1;
+    var totalWeeks = Math.ceil(totalDays / 7);
+    return { startDate: startDate, totalWeeks: totalWeeks };
+  }
+
+  function getWeekNumber(date) {
+    var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    var dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  }
+
+  function isSameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() &&
+           a.getMonth() === b.getMonth() &&
+           a.getDate() === b.getDate();
+  }
+
+  function renderCalendar(viewStartDate, viewWeeks) {
+    tbody.innerHTML = '';
+
+    var totalDays = viewWeeks * DAYS_PER_WEEK;
+    var allDates = [];
+    for (var i = 0; i < totalDays; i++) {
+      var d = new Date(viewStartDate);
+      d.setDate(d.getDate() + i);
+      allDates.push(d);
+    }
+
+    // Find the index (0-based day) where each month starts
+    var monthStartDays = [];
+    var lastMonthKey = null;
+    for (var i = 0; i < totalDays; i++) {
+      var m = allDates[i].getMonth();
+      var y = allDates[i].getFullYear();
+      var monthKey = y * 100 + m;
+      if (monthKey !== lastMonthKey) {
+        monthStartDays.push(i);
+        lastMonthKey = monthKey;
+      }
+    }
+
+    // Assign an alternating index to each month for coloring
+    var monthColorIndex = 0;
+    var monthToColor = {};
+    for (var i = 0; i < monthStartDays.length; i++) {
+      var m = allDates[monthStartDays[i]].getMonth();
+      var y = allDates[monthStartDays[i]].getFullYear();
+      var key = y * 100 + m;
+      monthToColor[key] = monthColorIndex % 2;
+      monthColorIndex++;
+    }
+
+    for (var w = 0; w < viewWeeks; w++) {
+      // Build week row
+      var row = document.createElement('tr');
+
+      // Week number
+      var weekNumCell = document.createElement('td');
+      weekNumCell.textContent = getWeekNumber(allDates[w * 7]);
+      row.appendChild(weekNumCell);
+
+      // Day cells
+      for (var d = 0; d < DAYS_PER_WEEK; d++) {
+        var cellDate = allDates[w * 7 + d];
+        var cell = document.createElement('td');
+        cell.className = 'day-cell';
+
+        if (isSameDay(cellDate, today)) {
+          cell.classList.add('today');
+        } else {
+          var mKey = cellDate.getFullYear() * 100 + cellDate.getMonth();
+          cell.classList.add('month-color-' + monthToColor[mKey]);
+        }
+
+        cell.textContent = cellDate.getDate();
+        row.appendChild(cell);
+      }
+
+      tbody.appendChild(row);
+    }
+  }
+
+  function scrollMonth(delta) {
+    viewCenter.setMonth(viewCenter.getMonth() + delta);
+    var view = computeView();
+    renderCalendar(view.startDate, view.totalWeeks);
+  }
+
+  document.getElementById('prev-month').addEventListener('click', function() {
+    scrollMonth(-1);
+  });
+
+  document.getElementById('next-month').addEventListener('click', function() {
+    scrollMonth(1);
+  });
+
+  document.getElementById('today-btn').addEventListener('click', function() {
+    viewCenter = new Date(today);
+    var view = computeView();
+    renderCalendar(view.startDate, view.totalWeeks);
+  });
+
+  var initialView = computeView();
+  renderCalendar(initialView.startDate, initialView.totalWeeks);
+})();
+</script>
+</body>
+</html>
