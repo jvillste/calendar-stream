@@ -97,6 +97,24 @@
     font-weight: 500;
   }
 
+  .month-label-cell {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #555;
+    background: #f0f4f8;
+    border-right: 2px solid #d8e4ee;
+    text-align: left;
+    padding-left: 4px;
+  }
+
+  tbody td:nth-child(2) {
+    font-size: 0.7rem;
+    color: #aaa;
+    background: #fafafa;
+    border-right: 2px solid #e8e8e8;
+    font-weight: 500;
+  }
+
   .month-label td {
     font-size: 0.72rem;
     font-weight: 700;
@@ -167,6 +185,7 @@
   <table>
     <thead>
       <tr>
+        <th>Month</th>
         <th>Wk</th>
         <th>Mon</th>
         <th>Tue</th>
@@ -264,9 +283,20 @@
       monthColorIndex++;
     }
 
+    var mIdx = 0;
+
     for (var w = 0; w < viewWeeks; w++) {
       // Build week row
       var row = document.createElement('tr');
+
+      // Month/year label on the left, only on the first row
+      var labelCell = document.createElement('td');
+      if (w === 0) {
+        var firstDate = allDates[0];
+        labelCell.textContent = MONTH_NAMES[firstDate.getMonth()].slice(0, 3) + ' ' + firstDate.getFullYear();
+      }
+      labelCell.className = 'month-label-cell';
+      row.appendChild(labelCell);
 
       // Week number
       var weekNumCell = document.createElement('td');
