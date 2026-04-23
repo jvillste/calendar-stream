@@ -212,8 +212,7 @@
   var today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Always show 6 months before and 6 months after the center date
-  var monthsBefore = 6;
+  var visibleMonthsPerDirection = 2;
 
   var tbody = document.getElementById('calendar-body');
 
@@ -223,10 +222,10 @@
   function computeView(anchorDate) {
     anchorDate = anchorDate || viewCenter;
     // Start date: 6 months before anchor, aligned to Monday
-    var startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - monthsBefore, 1);
+    var startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - visibleMonthsPerDirection, 1);
     startDate.setDate(startDate.getDate() - startDate.getDay() + 1);
     // End date: 6 months after anchor, aligned to Sunday
-    var endDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 6, 1);
+    var endDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + visibleMonthsPerDirection, 1);
     endDate.setDate(endDate.getDate() + 6 - endDate.getDay());
     // Calculate total days and weeks
     var totalDays = Math.ceil((endDate - startDate) / 86400000) + 1;
@@ -283,17 +282,19 @@
       monthColorIndex++;
     }
 
-    var mIdx = 0;
 
     for (var w = 0; w < viewWeeks; w++) {
       // Build week row
       var row = document.createElement('tr');
 
-      // Month/year label on the left, only on the first row
+      // Month/year label on the left for any week that contains the 1st
       var labelCell = document.createElement('td');
-      if (w === 0) {
-        var firstDate = allDates[0];
-        labelCell.textContent = MONTH_NAMES[firstDate.getMonth()].slice(0, 3) + ' ' + firstDate.getFullYear();
+      for (var d = 0; d < DAYS_PER_WEEK; d++) {
+        var labelDate = allDates[w * 7 + d];
+        if (labelDate.getDate() === 1) {
+          labelCell.textContent = MONTH_NAMES[labelDate.getMonth()].slice(0, 3) + ' ' + labelDate.getFullYear();
+          break;
+        }
       }
       labelCell.className = 'month-label-cell';
       row.appendChild(labelCell);
