@@ -274,14 +274,13 @@
     }
 
     // Assign an alternating index to each month for coloring
-    var monthColorIndex = 0;
+    // Use a stable key (year * 12 + month) so each month always gets the same color
     var monthToColor = {};
     for (var i = 0; i < monthStartDays.length; i++) {
       var m = allDates[monthStartDays[i]].getMonth();
       var y = allDates[monthStartDays[i]].getFullYear();
-      var key = y * 100 + m;
-      monthToColor[key] = monthColorIndex % 2;
-      monthColorIndex++;
+      var stableKey = y * 12 + m;
+      monthToColor[y * 100 + m] = stableKey % 2;
     }
 
 
