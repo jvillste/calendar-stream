@@ -189,7 +189,7 @@
   <table>
     <thead>
       <tr>
-        <th>Month</th>
+        <th></th>
         <th>Wk</th>
         <th>Mon</th>
         <th>Tue</th>
@@ -226,10 +226,10 @@
   function computeView(anchorDate) {
     anchorDate = anchorDate || viewCenter;
     // Start date: 6 months before anchor, aligned to Monday
-    var startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - visibleMonthsPerDirection, 1);
+    var startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - visibleMonthsPerDirection + 1, 1);
     startDate.setDate(startDate.getDate() - startDate.getDay() + 1);
     // End date: 6 months after anchor, aligned to Sunday
-    var endDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + visibleMonthsPerDirection, 1);
+    var endDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + visibleMonthsPerDirection + 1, 1);
     endDate.setDate(endDate.getDate() + 6 - endDate.getDay());
     // Calculate total days and weeks
     var totalDays = Math.ceil((endDate - startDate) / 86400000) + 1;
