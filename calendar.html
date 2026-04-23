@@ -146,6 +146,10 @@
     background: #e8f0fe;
   }
 
+  .day-cell.weekend {
+    color: #bbb;
+  }
+
   .month-color-0 { background: #fffbe6; }
   .month-color-1 { background: #f0f4f8; }
   .month-color-2 { background: #fffbe6; }
@@ -309,6 +313,10 @@
         var cellDate = allDates[w * 7 + d];
         var cell = document.createElement('td');
         cell.className = 'day-cell';
+
+        if (d >= 5) {
+          cell.classList.add('weekend');
+        }
 
         if (isSameDay(cellDate, today)) {
           cell.classList.add('today');
